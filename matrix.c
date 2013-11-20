@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAXDIMENSION 2000
+#define MAXDIMENSION 20000
 #define BUFFSIZE 20
 #define TMPFILE "./tmpmatrix.txt"
 #define MAXINT 40

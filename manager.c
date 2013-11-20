@@ -1,6 +1,4 @@
 #include <sys/ipc.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -11,8 +9,6 @@
 #include <string.h>
 #include <sys/wait.h>
 
-#define LOGFILE "./log.txt"
-#define KEYFILE "./client.c"
 #define TMPFILE "./tmpmatrix.txt"
 
 int count_of_alocated_pointers = 0;
@@ -30,13 +26,7 @@ void file_check();
 
 int get_number_symbols (int x);
 
-void increase_sem (int sem_id);
-	
-void decrease_sem (int sem_id);
-
 int main(int argc, char **argv) {
-	int sem_id , log_file_id;
-	key_t sem_key;
 	int i, fork_result;
 	char *client_number = NULL;
 	int total_cleints;
@@ -51,31 +41,6 @@ int main(int argc, char **argv) {
 	printf (" total %i clients \n",total_cleints);
 
 	file_check();
-	
-	/*fork_result=fork();
-	if (fork_result < 0)
-		my_error ("Can not run fork!\n\0");
-	else if (fork_result == 0) {
-		execl ("./matrix.out","./matrix.out",NULL);
-		my_error ("Can not run matrix creating application!\n\0");
-	}
-
-	if ( waitpid (fork_result, NULL,0) < 0)
-		my_error ("Problems with wait!\n\0");*/
-	
-	log_file_id = open (LOGFILE , O_RDWR | O_CREAT | O_TRUNC , 0666);
-	if (log_file_id < 0)
-		my_error ("FATAL ERROR! DISK C: WILL BE FORMATED!\n\0");
-	
-	sem_key = ftok (KEYFILE , 1);
-	if (sem_key < 0)
-		my_error ("FATALL ERROR! GENERAL FAILURE GETING KEY FOR SEMAFOR!\n\0");
-
-	sem_id = semget (sem_key , 1 , IPC_CREAT | 0666);
-	if (sem_id < 0)
-		my_error ("Can not create semafore!\n\0");
-
-	increase_sem (sem_id); 
 	
 	for (i=0; i<total_cleints; ++i) {
 		fork_result=fork();
@@ -124,25 +89,6 @@ void free_all_pointers () {
 	for (i = 0; i < count_of_alocated_pointers; ++i)
 		free (array_of_alocated_pointers [i]);
 	free (array_of_alocated_pointers);
-	return;
-}
-
-void increase_sem (int sem_id) {
-	struct sembuf mybuf;	
-	mybuf.sem_op = 1;
-	mybuf.sem_flg = 0;
-	mybuf.sem_num = 0;
-	if (semop (sem_id, &mybuf, 1) < 0)
-		my_error ("WTF?! Can not do an operation on semafor!\n\0");
-	return;
-}
-void decrease_sem (int sem_id) {
-	struct sembuf mybuf;
-	mybuf.sem_op = - 1;
-	mybuf.sem_flg = 0;
-	mybuf.sem_num = 0;
-	if (semop (sem_id, &mybuf, 1) < 0)
-		my_error ("WTF?! Can not do an operation on semafor!\n\0");
 	return;
 }
 

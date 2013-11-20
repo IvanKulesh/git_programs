@@ -13,7 +13,6 @@
 
 #define LOGFILE "./log.txt"
 #define KEYFILE "./client.c"
-#define LOG_FILE_ID 3
 #define HELLO 1
 #define WORKINFO 2
 #define LEFTMESSAGE 3
@@ -52,7 +51,7 @@ void send_array_res (int* array, int numb, int msg_id , long type);
 void get_array_msg (int* array, int dim, int msg_id , long type);
 
 int main (int argc, char** argv) {
-	int sem_id , msg_id, dimension , i;
+	int sem_id , msg_id, dimension , i , log_file_id;
 	key_t sem_key, msg_key;
 	int this_client_number;
 	int * first_array = NULL, *second_array = NULL, *result_array_part = NULL;
@@ -76,6 +75,11 @@ int main (int argc, char** argv) {
 	
 	umask (0);
 	
+	log_file_id = open (LOGFILE , O_RDWR | O_CREAT | O_TRUNC | O_APPEND , 0666);
+
+	if (log_file_id < 0)
+		my_error ("FATAL ERROR! DISK C: WILL BE FORMATED!\n\0");
+	
 	client_signature = (char*) malloc (sizeof(char) * (strlen ("Client number \0") + strlen (argv[1]) + 1) );
 	strcpy (client_signature , "Client number \0");
 	strcat (client_signature , argv[1]);
@@ -95,12 +99,14 @@ int main (int argc, char** argv) {
 	if (sem_key < 0)
 		my_error ("FATALL ERROR! GENERAL FAILURE GETING KEY FOR SEMAFOR!\n\0");
 
-	sem_id = semget (sem_key , 1 , 0666);
+	sem_id = semget (sem_key , 1 , IPC_CREAT | 0666);
 	if (sem_id < 0)
-		my_error ("Error in client when semget!\n\0");
+		my_error ("ERROR in client when semget! Exeting...\n\0");
 	
+	if (this_client_number == 1)
+		increase_sem (sem_id);
 
-	write_log ("Client is ready to work!\n\0" , sem_id, LOG_FILE_ID);
+	write_log ("Client is ready to work!\n\0" , sem_id, log_file_id);
 	
 	if (msgsnd (msg_id, &first_msg , 0, 0) < 0) {
 		msgctl (msg_id , IPC_RMID , NULL );
@@ -110,7 +116,7 @@ int main (int argc, char** argv) {
 	if ( msgrcv (msg_id , &second_msg, sizeof (struct infostr), WORKINFO, 0) < 0)
 		my_error ("Can't recieve a message!\n\0");
 	
-	write_log ("Message WORKINFO has been recieved!\n\0" , sem_id, LOG_FILE_ID);
+	write_log ("Message WORKINFO has been recieved!\n\0" , sem_id, log_file_id);
 	
 	dimension = second_msg.info.dimen ; 
 	start_position = second_msg.info.start_pos;
@@ -125,15 +131,15 @@ int main (int argc, char** argv) {
 	add_pointer (result_array_part);
 	
 	get_array_msg (first_array , dimension , msg_id , LEFTMESSAGE);
-	write_log ("First array has been recieved!\n\0" , sem_id, LOG_FILE_ID);
+	write_log ("First array has been recieved!\n\0" , sem_id, log_file_id);
 	get_array_msg (second_array , dimension , msg_id , RIGHTMESSAGE);
-	write_log ("Second array has been recieved!\n\0" , sem_id, LOG_FILE_ID);
+	write_log ("Second array has been recieved!\n\0" , sem_id, log_file_id);
 
 	for (i = start_position ; i < (start_position + total_elements) ; ++i)
 			result_array_part [i - start_position ] = get_element_matrix (first_array , second_array , dimension , i%dimension,i/dimension);
 	
 	
-	write_log ("Result array has been calculated!\n\0" , sem_id, LOG_FILE_ID);
+	write_log ("Result array has been calculated!\n\0" , sem_id, log_file_id);
 	
 	send_array_res (result_array_part , total_elements , msg_id , RESULTMESSAGE);
 	
@@ -141,6 +147,8 @@ int main (int argc, char** argv) {
 		my_error ("Can't recieve a message!\n\0");	
 	if ( msgctl ( msg_id , IPC_RMID , NULL ) < 0 )
 		my_error ("Can not delete message!\n\0");
+	if (close (log_file_id) < 0)
+		my_error ("Can not close log file!\n\0");
 	free_all_pointers();
 	return 0;
 }

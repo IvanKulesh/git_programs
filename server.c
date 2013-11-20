@@ -16,9 +16,7 @@
 #define TMPFILE "./tmpmatrix.txt"
 #define RESULTPATH "./result.txt"
 #define BUFFSIZE 20
-#define LOGFILE "./log.txt"
 #define KEYFILE "./client.c"
-#define LOG_FILE_ID 3
 #define MSGBUFFSIZE 20
 #define HELLO 1
 #define WORKINFO 2
@@ -88,9 +86,6 @@ int main(int argc, char** argv) {
 	if (sem_key < 0)
 		my_error ("FATALL ERROR! GENERAL FAILURE GETING KEY FOR SEMAFOR!\n\0");
 
-	sem_id = semget (sem_key , 1 , 0666);
-	if (sem_id < 0)
-		my_error ("Error in client when semget!\n\0");
 	
 	if ((file_id=open (TMPFILE,O_RDONLY))<0)
 		my_error ("Error when open file!\n\0");
@@ -168,12 +163,13 @@ int main(int argc, char** argv) {
 
 	execution_time = time(NULL);
 	execution_time -= current_time;	
+
+	sem_id = semget (sem_key , 1 , 0666);
+	if (sem_id < 0)
+		my_error ("Error in server when semget!\n\0");
 	
 	if (semctl (sem_id , 0 ,  IPC_RMID , 0) < 0)
 		my_error ("Holly shit! Can not delete the semefor!\n\0");
-
-	if (close (LOG_FILE_ID) < 0)
-		my_error ("FATAL ERROR! BIOS WILL BE DELETED!\n\0");
 	
 	printf ("Total calculating time is %i seconds\n", (int) execution_time);	
 	

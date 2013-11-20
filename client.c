@@ -139,7 +139,8 @@ int main (int argc, char** argv) {
 	
 	if ( msgrcv (msg_id , &first_msg, 0 , BYE , 0) < 0)
 		my_error ("Can't recieve a message!\n\0");	
-	
+	if ( msgctl ( msg_id , IPC_RMID , NULL ) < 0 )
+		my_error ("Can not delete message!\n\0");
 	free_all_pointers();
 	return 0;
 }

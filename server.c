@@ -380,8 +380,6 @@ void* thread_function (void* argument) {
 		my_error ("Can not send a message!\n\0");
 	}
 	
-	if ( msgctl ( arg->message_id , IPC_RMID , NULL ) < 0 )
-		my_error ("Can not delete message!\n\0");
 	return NULL;
 }
 

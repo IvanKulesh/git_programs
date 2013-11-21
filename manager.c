@@ -30,6 +30,7 @@ int main(int argc, char **argv) {
 	int i, fork_result;
 	char *client_number = NULL;
 	int total_cleints;
+	int file_id, dimension;
 
 	umask (0);	
 	
@@ -38,10 +39,23 @@ int main(int argc, char **argv) {
 
 	total_cleints = getnumber (argv[1]);
 
+	file_check();
+
+	if ((file_id=open (TMPFILE,O_RDONLY))<0)
+		my_error ("Error when open file!\n\0");
+
+	if (read(file_id,&dimension,sizeof(int))!=sizeof(int))
+		my_error ("error when reading from file!\n\0");
+	
+	if ( total_cleints > dimension * dimension )
+		total_cleints = dimension * dimension;
+
+	if (close(file_id) < 0)
+		my_error ("Error when closing file!\n\0");
+
+
 	printf (" total %i clients \n",total_cleints);
 
-	file_check();
-	
 	for (i=0; i<total_cleints; ++i) {
 		fork_result=fork();
 		if (fork_result < 0)
